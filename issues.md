@@ -1,14 +1,13 @@
 # Closed
 
-
+1. Create Board state representation
 
 # Open
 
-1. Create Board state representation
+2. Handle state transitions
 
 # Backlog
 
-- Handle state transitions
 - Handle illegal actions
 - Undo state transitions
 - Create AI :P
