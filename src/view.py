@@ -14,6 +14,7 @@ class View:
     
     def update(self, state: State):
         self._display_state(state)
+        # self._display_instructions()
 
 
 class TerminalView(View):
@@ -35,7 +36,7 @@ class TerminalView(View):
     def __init__(self):
         super().__init__()
     
-    def _display_state(self, state: State):
+    def _print_grid(self, state: State):
         string = ''
         piece_types = [
             state.white_pawns,
@@ -69,3 +70,9 @@ class TerminalView(View):
                 
             string += '\n'
         print(string)
+    
+    def _display_state(self, state: State):
+        self._print_grid(state)
+        print("Turn: ", end="")
+        print(BColors.GREEN + "WHITE" if state.white_turn else BColors.RED + "BLACK")
+        print(BColors.ENDC)
