@@ -10,6 +10,7 @@
 
 - Handle state transitions
 - Handle illegal actions
+- Undo state transitions
 - Create AI :P
 
 # Project Structure
