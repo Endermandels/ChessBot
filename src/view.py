@@ -12,9 +12,9 @@ class View:
     def _display_instructions(self, controller: ct.Controller):
         pass
     
-    def update(self, state: State):
+    def update(self, state: State, controller: ct.Controller):
         self._display_state(state)
-        # self._display_instructions()
+        self._display_instructions(controller)
 
 
 class TerminalView(View):
@@ -38,21 +38,10 @@ class TerminalView(View):
     
     def _print_grid(self, state: State):
         string = ''
-        piece_types = [
-            state.white_pawns,
-            state.white_rooks,
-            state.white_knights,
-            state.white_bishops,
-            state.white_queens,
-            state.white_king,
-            state.black_pawns,
-            state.black_rooks,
-            state.black_knights,
-            state.black_bishops,
-            state.black_queens,
-            state.black_king,
-        ]
+        piece_types = list(state.piece_types)
+        string += "  A   B   C   D   E   F   G   H\n"
         for row in range(8):
+            string += str(8-row)
             for col in range(8):
                 # Look for which piece type is occupying a space
                 empty = True
@@ -76,3 +65,7 @@ class TerminalView(View):
         print("Turn: ", end="")
         print(BColors.GREEN + "WHITE" if state.white_turn else BColors.RED + "BLACK")
         print(BColors.ENDC)
+    
+    def _display_instructions(self, controller: ct.Controller):
+        print(controller.INSTRUCTIONS)
+        print(">> ", end="")
