@@ -28,7 +28,14 @@ class State(NamedTuple):
 
 def is_illegal_piece_selection(state: State, selected_space: int) -> bool:
     """ Returns whether the selected space is illegal for the given state """
-    # TODO: Implement
+    for pt, bb in enumerate(state.piece_types):
+        if bb & selected_space:
+            if pt < 6 and not state.white_turn:
+                warn("* Cannot select WHITE piece on BLACK turn")
+                return True
+            if pt > 5 and state.white_turn:
+                warn("* Cannot select BLACK piece on WHITE turn")
+                return True
     return False
 
 def is_illegal_target_space(state: State, piece_to_move: int, target_space: int) -> bool:
