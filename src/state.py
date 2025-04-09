@@ -19,7 +19,22 @@ class Piece:
 class State(NamedTuple):
     """ Immutable state of chess game """
     # Bitboard
-    piece_types: tuple[int,...] = (0,0,0,0,0,0, 0,0,0,0,0,0) # white_pawn through black_king
+    piece_types: tuple[int,...] = (
+        # Bitboards for white pieces
+        0b0000000011111111000000000000000000000000000000000000000000000000,
+        0b1000000100000000000000000000000000000000000000000000000000000000,
+        0b0100001000000000000000000000000000000000000000000000000000000000,
+        0b0010010000000000000000000000000000000000000000000000000000000000,
+        0b0000100000000000000000000000000000000000000000000000000000000000,
+        0b0001000000000000000000000000000000000000000000000000000000000000,
+        # Bitboards for black pieces (mirrored from white)
+        0b0000000000000000000000000000000000000000000000001111111100000000,
+        0b0000000000000000000000000000000000000000000000000000000010000001,
+        0b0000000000000000000000000000000000000000000000000000000001000010,
+        0b0000000000000000000000000000000000000000000000000000000000100100,
+        0b0000000000000000000000000000000000000000000000000000000000001000,
+        0b0000000000000000000000000000000000000000000000000000000000010000,
+    ) # white_pawn through black_king
     
     # Game rules
     white_turn: bool = True
@@ -28,18 +43,25 @@ class State(NamedTuple):
 
 def is_illegal_piece_selection(state: State, selected_space: int) -> bool:
     """ Returns whether the selected space is illegal for the given state """
+    if selected_space == 0:
+        return True
     for pt, bb in enumerate(state.piece_types):
         if bb & selected_space:
+            # found selected piece
             if pt < 6 and not state.white_turn:
                 warn("* Cannot select WHITE piece on BLACK turn")
                 return True
             if pt > 5 and state.white_turn:
                 warn("* Cannot select BLACK piece on WHITE turn")
                 return True
-    return False
+            return False
+    warn("* Cannot select empty space")
+    return True
 
 def is_illegal_target_space(state: State, piece_to_move: int, target_space: int) -> bool:
     # TODO: Implement
+    if piece_to_move == 0 or target_space == 0:
+        return True
     return False
 
 def convert_selected_space_to_int(selected_space: str) -> int:
