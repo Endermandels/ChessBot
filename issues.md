@@ -9,6 +9,8 @@
 
 # Backlog
 
+- Handle castling
+- Handle en passant
 - Undo state transitions
 - Create AI :P
 

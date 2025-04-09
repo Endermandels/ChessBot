@@ -41,6 +41,9 @@ class State(NamedTuple):
     castling_rights: int = 0b1111 # 0b0001=white can castle short, 0b1000=black can castle long, etc.
     en_passant_square: int = 0 # which spaces are possible to en passant (set when a pawn moves 2 spaces)
 
+def is_white_piece(piece_type: int):
+    return piece_type < 6
+
 def is_illegal_piece_selection(state: State, selected_space: int) -> bool:
     """ Returns whether the selected space is illegal for the given state """
     if selected_space == 0:
@@ -48,20 +51,29 @@ def is_illegal_piece_selection(state: State, selected_space: int) -> bool:
     for pt, bb in enumerate(state.piece_types):
         if bb & selected_space:
             # found selected piece
-            if pt < 6 and not state.white_turn:
+            if is_white_piece(pt) and not state.white_turn:
                 warn("* Cannot select WHITE piece on BLACK turn")
                 return True
-            if pt > 5 and state.white_turn:
+            if not is_white_piece(pt) and state.white_turn:
                 warn("* Cannot select BLACK piece on WHITE turn")
                 return True
+            # no issues
             return False
     warn("* Cannot select empty space")
     return True
 
 def is_illegal_target_space(state: State, piece_to_move: int, target_space: int) -> bool:
-    # TODO: Implement
     if piece_to_move == 0 or target_space == 0:
         return True
+    for pt, bb in enumerate(state.piece_types):
+        if bb & target_space:
+            # found piece at target space
+            if is_white_piece(pt) and state.white_turn:
+                warn("* Cannot capture a WHITE piece on WHITE turn")
+                return True
+            if not is_white_piece(pt) and not state.white_turn:
+                warn("* Cannot capture a BLACK piece on BLACK turn")
+                return True
     return False
 
 def convert_selected_space_to_int(selected_space: str) -> int:
