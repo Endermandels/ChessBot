@@ -72,7 +72,7 @@ def get_piece_type(state: State, selected_space: int) -> int:
 def is_illegal_pawn_move(state: State, pt: int, src: int, dst: int) -> bool:
     """ Returns whether the pawn moving from src to dst is legal """
     direction = -1 if is_white_piece(pt) else 1 # white = up, black = down
-    start_row = 1 if is_white_piece(pt) else 6 # 2nd row for white, 7th row for black
+    start_row = 6 if is_white_piece(pt) else 1 # 2nd row for white, 7th row for black
 
     src_index = src.bit_length() - 1 # the higher the number, the closer to the white pieces
     dst_index = dst.bit_length() - 1
@@ -81,15 +81,24 @@ def is_illegal_pawn_move(state: State, pt: int, src: int, dst: int) -> bool:
 
     delta_row = dst_row - src_row
 
+    target_pt = get_piece_type(state, dst)
+
     # Moving straight
     if dst_col == src_col:
+        if target_pt != -1:
+            warn("* Cannot capture a piece in front of a pawn")
+            return True
         if (delta_row > 0) != (direction > 0):
-            warn("* Cannot move pawn backwards")
-            return True # Can't go in the opposite direction
-
-    # Moving straight 2 spaces from beginning to an open space
-    # Moving diagonal to capture an enemy piece
-    # En passant
+            warn("* Cannot move backwards")
+            return True
+        if abs(delta_row) > 2 or (src_row != start_row and delta_row == 2 * direction):
+            warn("* Too many spaces to travel")
+            return True
+        if src_row == start_row and delta_row == 2 * direction and \
+                get_piece_type(state, src >> 8 if is_white_piece(pt) else src << 8) != -1:
+            warn("* Cannot move over a piece on initial pawn move")
+            return True
+    # Moving diagonal
 
     return False
 
