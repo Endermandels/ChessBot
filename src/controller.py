@@ -23,7 +23,26 @@ class TerminalController(Controller):
             "  3) move to space\n"
     
     def update(self, cur_state: State) -> State:
-        uin = input()
+        uin = input().upper()
+        if uin.startswith('.'):
+            # e.g.: . a2 a4
+            # Move piece at a2 to a4
+            tokens = [t.strip() for t in uin.split()]
+            if len(tokens) < 3:
+                warn("* Not enough args; need: . src dst")
+                return cur_state
+            self.selected_space = convert_selected_space_to_int(tokens[1])
+            if is_illegal_piece_selection(cur_state, self.selected_space):
+                return cur_state
+            self.target_space = convert_selected_space_to_int(tokens[2])
+            if is_illegal_target_space(cur_state, self.selected_space, self.target_space):
+                self.target_space = 0
+                return cur_state
+            new_state = get_new_state(cur_state, self.selected_space, self.target_space)
+            self.selected_space = 0
+            self.target_space = 0
+            return new_state
+
         try:
             uin = int(uin)
         except:
