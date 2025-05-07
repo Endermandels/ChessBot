@@ -62,51 +62,66 @@ def is_queen(pt: int) -> bool:
 def is_king(pt: int) -> bool:
     return pt == Piece.WHITE_KING or pt == Piece.BLACK_KING
 
-def can_move_straight(state: State, src: int, dst: int, limit: int=10, forward_only: bool=False, movement_type: str='s') -> bool:
-    """ 
-    Test if going from src to dst is a straight line and can move in under [limit] steps.
-    
-    Args:
-        forward_only:   Whether to only move toward the enemy's side (for pawns)
-        movement_type:  's' = straight, 'd' = diagonal, 'sd' = straight or diagonal
-        
-    Returns:
-        Whether the move is legal
-    """
-    if src == 0 or dst == 0:
-        return False
-
-    try:
-        src_index = src.bit_length() - 1
-        dst_index = dst.bit_length() - 1
-    except ValueError:
-        return False  # One of the inputs is not a power of two
-
-    src_row, src_col = divmod(src_index, 8)
-    dst_row, dst_col = divmod(dst_index, 8)
-
-    delta_row = dst_row - src_row
-    delta_col = dst_col - src_col
-    
-    print(f'drow: {delta_row}, dcol: {delta_col}')
-    
-    return False
-    
-    if forward_only:
-        if state.white_turn and delta_row :
-            return 
-
-    if delta_row == 0 or delta_col == 0 or abs(delta_row) == abs(delta_col):
-        steps = max(abs(delta_row), abs(delta_col))
-        return steps <= limit
-    return False
-
 def get_piece_type(state: State, selected_space: int) -> int:
     """ Returns the piece type of the selected space; -1 if selected_space is empty """
     for pt, bb in enumerate(state.piece_types):
         if bb & selected_space:
             return pt
     return -1
+
+def is_illegal_pawn_move(state: State, pt: int, src: int, dst: int) -> bool:
+    """ Returns whether the pawn moving from src to dst is legal """
+    direction = -1 if is_white_piece(pt) else 1 # white = up, black = down
+    start_row = 1 if is_white_piece(pt) else 6 # 2nd row for white, 7th row for black
+
+    src_index = src.bit_length() - 1 # the higher the number, the closer to the white pieces
+    dst_index = dst.bit_length() - 1
+    src_row, src_col = divmod(src_index, 8)
+    dst_row, dst_col = divmod(dst_index, 8)
+
+    delta_row = dst_row - src_row
+
+    # Moving straight
+    if dst_col == src_col:
+        if (delta_row > 0) != (direction > 0):
+            warn("* Cannot move pawn backwards")
+            return True # Can't go in the opposite direction
+
+    # Moving straight 2 spaces from beginning to an open space
+    # Moving diagonal to capture an enemy piece
+    # En passant
+
+    return False
+
+def is_illegal_piece_move(state: State, src: int, dst: int) -> bool:
+    """ Returns whether moving the piece at src to dst is illegal """
+    pt = get_piece_type(state, src)
+    if is_pawn(pt):
+        return is_illegal_pawn_move(state, pt, src, dst)
+    return False
+
+def is_illegal_target_space(state: State, piece_to_move: int, target_space: int) -> bool:
+    """ Returns whether the target space is illegal given the board state and piece to move """
+    if piece_to_move == 0 or target_space == 0:
+        return True
+    
+    pt_target = get_piece_type(state, target_space)
+    pt_selected = get_piece_type(state, piece_to_move)
+    
+    # No piece at target space
+    if pt_selected < 0:
+        return True
+
+    # Cannot capture own piece
+    if pt_target > -1 and is_white_piece(pt_target) == is_white_piece(pt_selected):
+        warn("* Cannot capture your own piece")
+        return True
+    
+    # Check movement rules
+    if is_illegal_piece_move(state, piece_to_move, target_space):
+        return True
+            
+    return False
 
 def is_illegal_piece_selection(state: State, selected_space: int) -> bool:
     """ Returns whether the selected space is illegal for the given state """
@@ -125,27 +140,6 @@ def is_illegal_piece_selection(state: State, selected_space: int) -> bool:
         return False
     warn("* Cannot select empty space")
     return True
-
-def is_illegal_target_space(state: State, piece_to_move: int, target_space: int) -> bool:
-    if piece_to_move == 0 or target_space == 0:
-        return True
-    
-    pt_target = get_piece_type(state, target_space)
-    if pt_target > -1:
-        # found piece at target space
-        if is_white_piece(pt_target) and state.white_turn:
-            warn("* Cannot capture a WHITE piece on WHITE turn")
-            return True
-        if not is_white_piece(pt_target) and not state.white_turn:
-            warn("* Cannot capture a BLACK piece on BLACK turn")
-            return True
-        
-    pt_selected = get_piece_type(state, piece_to_move)
-    if is_pawn(pt_selected) and not can_move_straight(
-            state, piece_to_move, target_space, limit=2, forward_only=True):
-        return True
-            
-    return False
 
 def convert_selected_space_to_int(selected_space: str) -> int:
     """ Returns converted space integer, or 0 if selected space is illegal """

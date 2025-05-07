@@ -31,13 +31,16 @@ class TerminalController(Controller):
             return cur_state
         
         if uin == 1:
+            # Quit
             self.quit = True
         elif uin == 2:
+            # Select Piece
             uin = input(">> selected space: ").upper()
             self.selected_space = convert_selected_space_to_int(uin)
             if is_illegal_piece_selection(cur_state, self.selected_space):
                 self.selected_space = 0
         elif uin == 3:
+            # Move to Space
             if self.selected_space == 0:
                 warn("* Select a piece first")
                 return cur_state
