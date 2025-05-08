@@ -24,6 +24,7 @@ class TerminalController(Controller):
     
     def update(self, cur_state: State) -> State:
         uin = input().upper()
+        # Check shorthand notation
         if uin.startswith('.'):
             # e.g.: . a2 a4
             # Move piece at a2 to a4

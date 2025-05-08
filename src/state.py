@@ -80,26 +80,40 @@ def is_illegal_pawn_move(state: State, pt: int, src: int, dst: int) -> bool:
     dst_row, dst_col = divmod(dst_index, 8)
 
     delta_row = dst_row - src_row
+    delta_col = dst_col - src_col
 
     target_pt = get_piece_type(state, dst)
 
+    # General movement restrictions
+    if (delta_row > 0) != (direction > 0):
+        warn("* Cannot move backwards")
+        return True
+    if abs(delta_row) > 2:
+        warn("* Too many spaces to travel")
+        return True
     # Moving straight
     if dst_col == src_col:
+        if (src_row != start_row and delta_row == 2 * direction):
+            warn("* Too many spaces to travel")
+            return True
         if target_pt != -1:
             warn("* Cannot capture a piece in front of a pawn")
-            return True
-        if (delta_row > 0) != (direction > 0):
-            warn("* Cannot move backwards")
-            return True
-        if abs(delta_row) > 2 or (src_row != start_row and delta_row == 2 * direction):
-            warn("* Too many spaces to travel")
             return True
         if src_row == start_row and delta_row == 2 * direction and \
                 get_piece_type(state, src >> 8 if is_white_piece(pt) else src << 8) != -1:
             warn("* Cannot move over a piece on initial pawn move")
             return True
     # Moving diagonal
-
+    else:
+        if abs(delta_col) > 1:
+            warn("* Cannot move more than one column over")
+            return True
+        if abs(delta_row) != 1:
+            warn("* Must move one row up while going diagonal")
+            return True
+        if target_pt == -1 and dst & state.en_passant_square == 0:
+            warn("* Must capture a piece to move diagonal")
+            return True
     return False
 
 def is_illegal_piece_move(state: State, src: int, dst: int) -> bool:
@@ -173,6 +187,10 @@ def get_new_state(state: State, selected_space: int, target_space: int) -> State
     if selected_space == 0 or target_space == 0:
         return state
     selected_mask = selected_space ^ 0xFFFFFFFFFFFFFFFF
-    
-    new_piece_types = tuple(pt & selected_mask | (target_space if pt & selected_space else 0) for pt in state.piece_types)
+    target_mask = target_space ^ 0xFFFFFFFFFFFFFFFF
+
+    new_piece_types = tuple(pt & 
+                            selected_mask & 
+                            (target_mask if pt & target_space else 0xFFFFFFFFFFFFFFFF) |
+                            (target_space if pt & selected_space else 0) for pt in state.piece_types)
     return State(piece_types=new_piece_types, white_turn=not state.white_turn)
